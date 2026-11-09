@@ -5,161 +5,505 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Colis Vinted</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 12px; background: #fff; color: #111; max-width: 640px; margin: auto; }
-  button, input, select { font-size: 16px; padding: 10px; margin: 4px 0; }
-  button { cursor: pointer; }
-  .tabs button.on { font-weight: bold; text-decoration: underline; }
-  .cmd { border: 2px solid #ccc; border-radius: 8px; padding: 10px; margin: 10px 0; display: flex; gap: 10px; }
-  .cmd img { width: 90px; height: 90px; object-fit: cover; border-radius: 6px; }
+  body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 12px; max-width: 760px; background: #fff; color: #111; }
+  button, input, select, textarea { font-size: 16px; padding: 10px; margin: 4px 0; box-sizing: border-box; }
+  textarea, input[type=text], input[type=password], input[type=number] { width: 100%; }
+  nav { display: flex; gap: 4px; flex-wrap: wrap; position: sticky; top: 0; background: #fff; padding: 4px 0; }
+  nav button.on { font-weight: bold; background: #111; color: #fff; }
+  .page { display: none; } .page.on { display: block; }
+  .drop { border: 3px dashed #999; border-radius: 10px; padding: 24px; text-align: center; margin: 8px 0; }
+  .drop.over { background: #eef; }
+  .thumbs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .thumbs img { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .grid figure { margin: 0; border: 1px solid #ccc; border-radius: 8px; padding: 4px; text-align: center; font-size: 13px; }
+  .grid img { width: 100%; border-radius: 6px; }
+  .card { border: 3px solid #ccc; border-radius: 10px; padding: 10px; margin: 10px 0; display: flex; gap: 10px; }
+  .card img { width: 90px; height: 110px; object-fit: cover; border-radius: 6px; flex: none; }
   .num { font-size: 28px; font-weight: bold; }
-  .s0 { border-color: #d33; } .s1 { border-color: #e90; } .s2 { border-color: #2a2; }
-  .hidden { display: none; }
-  form label { display: block; margin-top: 8px; }
-  form input { width: 100%; box-sizing: border-box; }
+  .st-rouge { border-color: #d33; } .st-orange { border-color: #e90; } .st-bleu { border-color: #36c; }
+  .st-vert { border-color: #2a2; } .st-gris { border-color: #aaa; opacity: .7; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .stats div { border: 1px solid #ccc; border-radius: 8px; padding: 8px; }
+  .stats b { display: block; font-size: 22px; }
+  .err { color: #c00; } .small { font-size: 13px; color: #555; }
 </style>
 </head>
 <body>
-<h2>Colis Vinted</h2>
+<nav>
+  <button data-p="photos" class="on">1. Photos</button>
+  <button data-p="ventes">2. Ventes</button>
+  <button data-p="bordereaux">3. Bordereaux</button>
+  <button data-p="reglages">⚙️</button>
+</nav>
 
-<div class="tabs">
-  <button data-f="0" class="on">À emballer</button>
-  <button data-f="1">Emballé</button>
-  <button data-f="2">Envoyé</button>
-  <button data-f="all">Tout</button>
-</div>
-<button id="btnNew">+ Nouvelle vente</button>
+<!-- ===== PAGE 1 : PHOTOS + DESCRIPTION ===== -->
+<section id="photos" class="page on">
+  <h3>Photos de l'article</h3>
+  <div class="drop" id="dropArt">Glisse ou touche ici pour ajouter les photos de l'article</div>
+  <div class="thumbs" id="artThumbs"></div>
+  <p class="small">Photos de toi : <span id="moiCount">0</span> enregistrée(s) (à changer dans ⚙️).</p>
+  <button id="btnGen">✨ Générer 3 fond blanc + 3 portées</button>
+  <button id="btnDesc">📝 Générer la description</button>
+  <p id="genMsg"></p>
+  <div class="grid" id="genGrid"></div>
+  <button id="btnShare" class="hidden" style="display:none">💾 Enregistrer toutes les photos</button>
 
-<form id="form" class="hidden">
-  <label>Photo de l'article <input type="file" id="fPhoto" accept="image/*"></label>
-  <label>Nom de l'article <input id="fNom" required></label>
-  <label>Pseudo de l'acheteur <input id="fPseudo" required></label>
-  <button type="submit">Enregistrer</button>
-  <button type="button" id="btnCancel">Annuler</button>
-</form>
+  <h3>Description</h3>
+  <textarea id="desc" rows="10" placeholder="La description apparaîtra ici"></textarea>
+  <button id="btnCopy">📋 Copier</button>
 
-<div id="list"></div>
+  <h3>Mettre en stock</h3>
+  <input type="text" id="stTitre" placeholder="Titre de l'annonce (le même que sur Vinted)">
+  <input type="number" id="stAchat" placeholder="Prix d'achat (€)" step="0.01">
+  <button id="btnStock">📦 Ajouter au stock</button>
+</section>
 
-<hr>
-<label>Où mettre la photo sur le bordereau :
-  <select id="pos">
-    <option value="br">En bas à droite</option>
-    <option value="bl">En bas à gauche</option>
-    <option value="tr">En haut à droite</option>
-    <option value="tl">En haut à gauche</option>
-    <option value="page">Sur une page à part</option>
-  </select>
-</label>
-<input type="file" id="pdfInput" accept="application/pdf" class="hidden">
+<!-- ===== PAGE 2 : VENTES + COMPTA ===== -->
+<section id="ventes" class="page">
+  <button id="btnRefresh">🔄 Actualiser depuis Gmail</button>
+  <span id="ventesMsg" class="small"></span>
+  <div class="stats" id="stats"></div>
+  <p>
+    <select id="filtre">
+      <option value="todo">À faire (pas encore envoyé)</option>
+      <option value="all">Tout</option>
+    </select>
+  </p>
+  <div id="ventesList"></div>
+  <h3>Stock (<span id="stockCount">0</span>)</h3>
+  <div id="stockList"></div>
+</section>
 
+<!-- ===== PAGE 3 : BORDEREAUX ===== -->
+<section id="bordereaux" class="page">
+  <p>Les bordereaux reçus par mail sont tamponnés tout seuls.</p>
+  <button id="btnAllLabels">🖨 Tous les bordereaux à envoyer en 1 PDF</button>
+  <div id="labelsList"></div>
+  <h3>Ajouter un PDF à la main</h3>
+  <div class="drop" id="dropPdf">Glisse ou touche ici pour ajouter un bordereau PDF</div>
+  <div id="pickBox"></div>
+  <label>Place du cadre photo :
+    <select id="pos">
+      <option value="br">En bas à droite</option>
+      <option value="bl">En bas à gauche</option>
+      <option value="tr">En haut à droite</option>
+      <option value="tl">En haut à gauche</option>
+      <option value="page">Sur une page à part</option>
+    </select>
+  </label>
+</section>
+
+<!-- ===== RÉGLAGES ===== -->
+<section id="reglages" class="page">
+  <h3>Photos de toi (pour les photos portées)</h3>
+  <div class="drop" id="dropMoi">Glisse ou touche ici pour ajouter tes photos</div>
+  <div class="thumbs" id="moiThumbs"></div>
+  <button id="btnMoiClear">Effacer mes photos</button>
+
+  <h3>Clés et liens</h3>
+  <label>Clé API Gemini <input type="password" id="kGemini"></label>
+  <label>Modèle d'image Gemini <input type="text" id="mGemini"></label>
+  <label>Clé API Groq <input type="password" id="kGroq"></label>
+  <label>Modèle Groq (vision) <input type="text" id="mGroq"></label>
+  <label>Lien du script Gmail <input type="text" id="kScript" placeholder="https://script.google.com/macros/s/.../exec"></label>
+
+  <h3>Ton prompt de description</h3>
+  <textarea id="pDesc" rows="8"></textarea>
+  <button id="btnSave">💾 Enregistrer</button>
+</section>
+
+<input type="file" id="fileIn" multiple class="hidden" style="display:none">
 <script src="pdf-lib.min.js"></script>
 <script>
-const STATUTS = ['À emballer', 'Emballé', 'Envoyé'];
-let filtre = '0';
-let pdfFor = null;
+// ================= Outils =================
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const eur = n => (n || 0).toFixed(2).replace('.', ',') + ' €';
 
-// ---- Stockage (IndexedDB, reste sur le téléphone) ----
+// Stockage local (IndexedDB) : clé -> valeur
 const dbP = new Promise((ok, ko) => {
-  const r = indexedDB.open('colis-vinted', 1);
-  r.onupgradeneeded = () => r.result.createObjectStore('cmd', { keyPath: 'id' });
-  r.onsuccess = () => ok(r.result);
-  r.onerror = () => ko(r.error);
+  const r = indexedDB.open('colis-vinted-2', 1);
+  r.onupgradeneeded = () => r.result.createObjectStore('kv');
+  r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error);
 });
-async function tx(mode, fn) {
+async function kv(key, val) {
   const db = await dbP;
   return new Promise((ok, ko) => {
-    const t = db.transaction('cmd', mode);
-    const req = fn(t.objectStore('cmd'));
-    t.oncomplete = () => ok(req && req.result);
+    const t = db.transaction('kv', val === undefined ? 'readonly' : 'readwrite');
+    const s = t.objectStore('kv');
+    const req = val === undefined ? s.get(key) : s.put(val, key);
+    t.oncomplete = () => ok(val === undefined ? req.result : val);
     t.onerror = () => ko(t.error);
   });
 }
-const all = () => tx('readonly', s => s.getAll());
-const save = c => tx('readwrite', s => s.put(c));
-const del = id => tx('readwrite', s => s.delete(id));
 
-// ---- Photo réduite en JPEG ----
-function shrink(file, max = 600) {
+// Réglages (sur ce téléphone uniquement)
+const DEF = {
+  mGemini: 'gemini-2.5-flash-image',
+  mGroq: 'meta-llama/llama-4-scout-17b-16e-instruct',
+  pDesc: "Tu es un vendeur Vinted expert. À partir des photos, écris une annonce en français.\nLigne 1 : un titre accrocheur (60 caractères max) avec marque, type, couleur, taille si visible.\nEnsuite : une description claire et honnête (état, matière, détails, coupe), puis 5 à 8 hashtags.\nN'invente pas de taille ni de marque si elles ne sont pas visibles.",
+  pos: 'br',
+};
+const cfg = k => { try { return localStorage.getItem(k) ?? DEF[k] ?? ''; } catch { return DEF[k] ?? ''; } };
+const setCfg = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+
+// Image -> JPEG réduit (dataURL)
+function shrink(file, max = 1024) {
   return new Promise((ok, ko) => {
     const img = new Image();
     img.onload = () => {
       const k = Math.min(1, max / Math.max(img.width, img.height));
       const c = document.createElement('canvas');
-      c.width = img.width * k; c.height = img.height * k;
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(img.src);
-      ok(c.toDataURL('image/jpeg', 0.8));
+      ok(c.toDataURL('image/jpeg', 0.85));
     };
-    img.onerror = ko;
+    img.onerror = () => ko(new Error('image illisible'));
     img.src = URL.createObjectURL(file);
   });
 }
+const b64 = dataUrl => dataUrl.split(',')[1];
 
-// ---- Liste ----
-async function render() {
-  const cmds = (await all()).sort((a, b) => b.num - a.num);
-  const list = document.getElementById('list');
-  const vis = cmds.filter(c => filtre === 'all' || String(c.statut) === filtre);
-  list.innerHTML = vis.length ? '' : '<p>Rien ici.</p>';
-  for (const c of vis) {
-    const d = document.createElement('div');
-    d.className = 'cmd s' + c.statut;
-    d.innerHTML = `
-      ${c.photo ? `<img src="${c.photo}">` : ''}
-      <div>
-        <div class="num">#${c.num}</div>
-        <div><b>${esc(c.nom)}</b></div>
-        <div>Acheteur : ${esc(c.pseudo)}</div>
-        <div>Statut : ${STATUTS[c.statut]}</div>
-        <button data-a="pdf">📄 Bordereau → ajouter la photo</button>
-        ${c.statut < 2 ? `<button data-a="next">✅ Passer à « ${STATUTS[c.statut + 1]} »</button>` : ''}
-        ${c.statut > 0 ? `<button data-a="back">↩︎ Revenir</button>` : ''}
-        <button data-a="del">🗑</button>
-      </div>`;
-    d.onclick = e => action(e.target.dataset.a, c);
-    list.appendChild(d);
-  }
-}
-const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
-
-async function action(a, c) {
-  if (!a) return;
-  if (a === 'next') {
-    // Vérif anti-erreur avant d'avancer
-    const msg = c.statut === 0
-      ? `Colis #${c.num}\nArticle : ${c.nom}\n\nL'article dans le colis = celui de la photo ?\nTu as écrit #${c.num} sur le colis ?`
-      : `Colis #${c.num} déposé au point relais ?`;
-    if (!confirm(msg)) return;
-    c.statut++;
-  }
-  if (a === 'back') c.statut--;
-  if (a === 'del') { if (confirm(`Supprimer #${c.num} ?`)) await del(c.id); return render(); }
-  if (a === 'pdf') { pdfFor = c; const i = document.getElementById('pdfInput'); i.value = ''; i.click(); return; }
-  await save(c);
-  render();
+// Zone glisser-déposer + clic
+function dropZone(el, accept, onFiles) {
+  el.ondragover = e => { e.preventDefault(); el.classList.add('over'); };
+  el.ondragleave = () => el.classList.remove('over');
+  el.ondrop = e => { e.preventDefault(); el.classList.remove('over'); onFiles([...e.dataTransfer.files]); };
+  el.onclick = () => {
+    const i = $('fileIn'); i.accept = accept; i.value = '';
+    i.onchange = () => onFiles([...i.files]); i.click();
+  };
 }
 
-// ---- Tampon sur le bordereau PDF ----
-document.getElementById('pdfInput').onchange = async e => {
-  const file = e.target.files[0];
-  if (!file || !pdfFor) return;
-  try {
-    const out = await stamp(await file.arrayBuffer(), pdfFor, document.getElementById('pos').value);
-    download(out, `bordereau-${pdfFor.num}-${pdfFor.pseudo}.pdf`);
-  } catch (err) { alert('Erreur PDF : ' + err.message); }
+// ================= Navigation =================
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === b.dataset.p));
+  if (b.dataset.p === 'ventes' || b.dataset.p === 'bordereaux') loadSales();
+});
+
+// ================= PAGE 1 =================
+let artPhotos = [];
+let genImgs = [];
+
+dropZone($('dropArt'), 'image/*', async files => {
+  for (const f of files) if (f.type.startsWith('image/')) artPhotos.push(await shrink(f));
+  $('artThumbs').innerHTML = artPhotos.map(p => `<img src="${p}">`).join('') +
+    (artPhotos.length ? ' <button onclick="artPhotos=[];this.parentNode.innerHTML=\'\'">✕ vider</button>' : '');
+});
+
+const ECOM = "Use the product shown in the PRODUCT photos. Create a clean e-commerce product photo on a pure white background (#FFFFFF), soft even studio lighting, product centered, sharp. The product must stay EXACTLY identical: same color, shape, logos, text, prints, texture, stitching, labels and wear marks. Do not add, remove or change anything on the product. No props, no text, no watermark. ";
+const ECOM_V = ['Front view, laid flat or on an invisible mannequin.', 'Three-quarter angle view.', 'Close-up on the most distinctive detail (logo, label, fabric or hardware).'];
+const PORTE = "The first photos show the PERSON, the next photos show the PRODUCT. Create a realistic photo of this exact person wearing or using this exact product. Keep the person's face, skin tone, hair and body identical. The product must stay EXACTLY identical: same color, shape, logos, text, prints, texture and details; do not change it. Realistic smartphone photo, natural light, suited for a Vinted listing. No text, no watermark. ";
+const PORTE_V = ['Full body mirror selfie in a bright, tidy minimalist room.', 'Full body outfit photo outdoors in a city street, background slightly blurred.', 'Medium shot focused on the product being worn, natural pose.'];
+
+async function gemini(prompt, imgs) {
+  const key = cfg('kGemini');
+  if (!key) throw new Error('Clé Gemini manquante (⚙️)');
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cfg('mGemini')}:generateContent?key=${encodeURIComponent(key)}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }, ...imgs.map(d => ({ inline_data: { mime_type: 'image/jpeg', data: b64(d) } }))] }],
+      generationConfig: { responseModalities: ['IMAGE'] },
+    }),
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error?.message || 'Erreur Gemini ' + r.status);
+  const part = (j.candidates?.[0]?.content?.parts || []).find(p => p.inlineData || p.inline_data);
+  if (!part) throw new Error('Gemini n\'a pas renvoyé d\'image (' + (j.candidates?.[0]?.finishReason || 'raison inconnue') + ')');
+  const d = part.inlineData || part.inline_data;
+  return `data:${d.mimeType || d.mime_type || 'image/png'};base64,${d.data}`;
+}
+
+$('btnGen').onclick = async () => {
+  if (!artPhotos.length) return alert('Ajoute d\'abord les photos de l\'article.');
+  const moi = (await kv('moi')) || [];
+  const jobs = [
+    ...ECOM_V.map((v, i) => ({ label: 'Fond blanc ' + (i + 1), prompt: ECOM + v, imgs: artPhotos.slice(0, 4) })),
+    ...PORTE_V.map((v, i) => ({ label: 'Porté ' + (i + 1), prompt: PORTE + v, imgs: [...moi.slice(0, 3), ...artPhotos.slice(0, 3)] })),
+  ];
+  if (!moi.length) { alert('Pas de photo de toi dans ⚙️ : seules les photos fond blanc seront faites.'); jobs.splice(3); }
+  genImgs = new Array(jobs.length).fill(null);
+  $('genGrid').innerHTML = jobs.map((j, i) => `<figure id="g${i}">⏳ ${j.label}</figure>`).join('');
+  $('btnShare').style.display = 'none';
+  $('genMsg').textContent = 'Génération en cours… (environ 30 s)';
+  const run = async i => {
+    const fig = $('g' + i), j = jobs[i];
+    fig.innerHTML = `⏳ ${j.label}`;
+    try {
+      genImgs[i] = await gemini(j.prompt, j.imgs);
+      fig.innerHTML = `<img src="${genImgs[i]}"><div>${j.label}</div><button data-i="${i}">↻ Refaire</button>`;
+    } catch (e) {
+      fig.innerHTML = `<div class="err">${j.label} : ${esc(e.message)}</div><button data-i="${i}">↻ Refaire</button>`;
+    }
+    fig.querySelector('button').onclick = () => run(i);
+    if (genImgs.some(Boolean)) $('btnShare').style.display = '';
+  };
+  // 3 à la fois pour ne pas saturer
+  for (let i = 0; i < jobs.length; i += 3) await Promise.all(jobs.slice(i, i + 3).map((_, k) => run(i + k)));
+  $('genMsg').textContent = 'Terminé. Vérifie bien que le produit n\'a pas changé avant de publier.';
 };
 
-async function stamp(bytes, c, pos) {
+$('btnShare').onclick = async () => {
+  const files = await Promise.all(genImgs.filter(Boolean).map(async (d, i) => {
+    const blob = await (await fetch(d)).blob();
+    return new File([blob], `vinted-${i + 1}.${blob.type.includes('png') ? 'png' : 'jpg'}`, { type: blob.type });
+  }));
+  if (navigator.canShare && navigator.canShare({ files })) {
+    try { await navigator.share({ files }); return; } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; a.click(); });
+};
+
+$('btnDesc').onclick = async () => {
+  const imgs = [...artPhotos, ...genImgs.filter(Boolean)].slice(0, 5);
+  if (!imgs.length) return alert('Ajoute d\'abord des photos.');
+  const key = cfg('kGroq');
+  if (!key) return alert('Clé Groq manquante (⚙️)');
+  $('desc').value = '⏳ Écriture…';
+  try {
+    // Groq limite la taille : on renvoie des images plus petites
+    const small = await Promise.all(imgs.map(async d => shrink(await (await fetch(d)).blob(), 768)));
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+      body: JSON.stringify({
+        model: cfg('mGroq'), temperature: 0.6,
+        messages: [{ role: 'user', content: [{ type: 'text', text: cfg('pDesc') }, ...small.map(u => ({ type: 'image_url', image_url: { url: u } }))] }],
+      }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error?.message || 'Erreur Groq ' + r.status);
+    const txt = j.choices[0].message.content.trim();
+    $('desc').value = txt;
+    if (!$('stTitre').value) $('stTitre').value = txt.split('\n')[0].replace(/^(titre\s*:\s*)/i, '').replace(/[*#"]/g, '').trim();
+  } catch (e) { $('desc').value = ''; alert(e.message); }
+};
+
+$('btnCopy').onclick = () => navigator.clipboard.writeText($('desc').value).then(() => alert('Copié'));
+
+$('btnStock').onclick = async () => {
+  const titre = $('stTitre').value.trim();
+  if (!titre) return alert('Mets un titre.');
+  const stock = (await kv('stock')) || [];
+  stock.push({ id: Date.now().toString(36), titre, achat: parseFloat($('stAchat').value) || 0, photo: genImgs.find(Boolean) ? await shrink(await (await fetch(genImgs.find(Boolean))).blob(), 300) : (artPhotos[0] ? await shrink(await (await fetch(artPhotos[0])).blob(), 300) : null), date: Date.now() });
+  await kv('stock', stock);
+  $('stTitre').value = ''; $('stAchat').value = '';
+  alert('Ajouté au stock');
+};
+
+// ================= PAGE 2 =================
+let sales = [];
+const norm = s => String(s).toLowerCase().replace(/\s+/g, ' ').trim();
+const same = (a, b) => { a = norm(a); b = norm(b); return a === b || a.startsWith(b) || b.startsWith(a); };
+
+async function api(params) {
+  const url = cfg('kScript');
+  if (!url) throw new Error('Lien du script Gmail manquant (⚙️)');
+  const r = await fetch(url + '?' + new URLSearchParams(params));
+  const j = await r.json();
+  if (j.error) throw new Error(j.error);
+  return j;
+}
+
+async function loadSales(force) {
+  if (!force && sales.length) return renderAll();
+  sales = (await kv('salesCache')) || [];
+  renderAll();
+  $('ventesMsg').textContent = '⏳ Lecture des mails…';
+  try {
+    const j = await api({ action: 'sales' });
+    const meta = (await kv('meta')) || {};
+    let next = (await kv('nextNum')) || 1;
+    // Numéro fixe par vente (dans l'ordre d'arrivée)
+    for (const s of j.sales) if (!meta[s.id]) meta[s.id] = { num: next++ };
+    await kv('meta', meta); await kv('nextNum', next);
+    sales = j.sales;
+    await kv('salesCache', sales);
+    $('ventesMsg').textContent = 'À jour ✓';
+  } catch (e) {
+    $('ventesMsg').innerHTML = `<span class="err">${esc(e.message)}</span>`;
+  }
+  renderAll();
+}
+$('btnRefresh').onclick = () => loadSales(true);
+$('filtre').onchange = () => renderAll();
+
+// Statut affiché = mails + ce que tu as coché
+function statut(s, m) {
+  if (s.status === 'annule') return ['Annulé', 'gris', 9];
+  if (s.status === 'paye') return ['Payé ✓', 'vert', 8];
+  if (s.status === 'livre') return ['Livré', 'vert', 7];
+  if (s.status === 'envoye' || m.envoye) return ['Envoyé', 'bleu', 6];
+  if (m.emballe) return ['Emballé — à déposer', 'orange', 3];
+  if (s.labelId) return ['Bordereau prêt — à emballer', 'rouge', 2];
+  return ['Vendu — créer le bordereau sur Vinted', 'rouge', 1];
+}
+
+async function renderAll() {
+  const meta = (await kv('meta')) || {};
+  const stock = (await kv('stock')) || [];
+  // Prix d'achat : celui tapé sur la vente, sinon celui du stock (même titre)
+  const achat = s => meta[s.id]?.achat ?? stock.find(x => same(x.titre, s.title))?.achat ?? 0;
+
+  // --- Compta ---
+  const now = new Date(), moisDebut = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const ok = sales.filter(s => s.status !== 'annule');
+  const mois = ok.filter(s => s.date >= moisDebut);
+  const sum = (arr, f) => arr.reduce((t, x) => t + f(x), 0);
+  const enStock = stock.filter(x => !sales.some(s => same(x.titre, s.title) && s.status !== 'annule'));
+  $('stats').innerHTML = `
+    <div>Ventes ce mois<b>${mois.length}</b></div>
+    <div>CA ce mois<b>${eur(sum(mois, s => s.price))}</b></div>
+    <div>Bénéfice ce mois<b>${eur(sum(mois, s => s.price - achat(s)))}</b></div>
+    <div>À envoyer<b>${ok.filter(s => statut(s, meta[s.id] || {})[2] < 6).length}</b></div>
+    <div>CA 90 jours<b>${eur(sum(ok, s => s.price))}</b></div>
+    <div>Achats 90 jours<b>${eur(sum(ok, achat))}</b></div>
+    <div>Bénéfice 90 jours<b>${eur(sum(ok, s => s.price - achat(s)))}</b></div>
+    <div>Valeur du stock<b>${eur(sum(enStock, x => x.achat))}</b></div>`;
+
+  // --- Liste des ventes ---
+  const list = [...sales].sort((a, b) => statut(a, meta[a.id] || {})[2] - statut(b, meta[b.id] || {})[2] || b.date - a.date)
+    .filter(s => $('filtre').value === 'all' || statut(s, meta[s.id] || {})[2] < 6);
+  $('ventesList').innerHTML = list.length ? '' : '<p>Rien à faire 🎉</p>';
+  for (const s of list) {
+    const m = meta[s.id] || {};
+    const [txt, col, rang] = statut(s, m);
+    const d = document.createElement('div');
+    d.className = 'card st-' + col;
+    d.innerHTML = `
+      ${s.image ? `<img src="${esc(s.image)}" referrerpolicy="no-referrer">` : ''}
+      <div>
+        <div class="num">#${m.num ?? '?'}</div>
+        <div><b>${esc(s.title)}</b></div>
+        <div>Acheteur : <b>${esc(s.buyer)}</b> — ${eur(s.price)}</div>
+        <div>${txt}</div>
+        <div class="small">${new Date(s.date).toLocaleDateString('fr-FR')}</div>
+        ${rang === 2 ? '<button data-a="emballe">✅ C\'est emballé</button>' : ''}
+        ${rang === 3 ? '<button data-a="envoye">✅ Déposé au point relais</button>' : ''}
+        ${rang === 3 || (rang === 6 && m.envoye && s.status !== 'envoye') ? '<button data-a="undo">↩︎</button>' : ''}
+        <div class="small">Prix d'achat : <input type="number" step="0.01" style="width:90px" value="${achat(s) || ''}" data-a="achat"> €</div>
+      </div>`;
+    d.onclick = async e => {
+      const a = e.target.dataset.a;
+      if (!a || a === 'achat') return;
+      const meta = (await kv('meta')) || {};
+      const mm = meta[s.id] = meta[s.id] || {};
+      if (a === 'emballe') {
+        if (!confirm(`Colis #${mm.num}\n${s.title}\nAcheteur : ${s.buyer}\n\nL'article dans le colis = la photo ?\nTu as écrit #${mm.num} sur le colis ?`)) return;
+        mm.emballe = true;
+      }
+      if (a === 'envoye') mm.envoye = true;
+      if (a === 'undo') { if (mm.envoye) mm.envoye = false; else mm.emballe = false; }
+      await kv('meta', meta); renderAll();
+    };
+    d.querySelector('[data-a=achat]').onchange = async e => {
+      const meta = (await kv('meta')) || {};
+      (meta[s.id] = meta[s.id] || {}).achat = parseFloat(e.target.value) || 0;
+      await kv('meta', meta); renderAll();
+    };
+    $('ventesList').appendChild(d);
+  }
+
+  // --- Stock ---
+  $('stockCount').textContent = enStock.length;
+  $('stockList').innerHTML = enStock.map(x => `<div class="card">${x.photo ? `<img src="${x.photo}">` : ''}<div><b>${esc(x.titre)}</b><div>Achat : ${eur(x.achat)}</div><button data-del="${x.id}">🗑</button></div></div>`).join('');
+  $('stockList').querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
+    if (!confirm('Retirer du stock ?')) return;
+    await kv('stock', ((await kv('stock')) || []).filter(x => x.id !== b.dataset.del)); renderAll();
+  });
+
+  renderLabels(meta);
+}
+
+// ================= PAGE 3 =================
+const aEnvoyer = meta => sales.filter(s => statut(s, meta[s.id] || {})[2] < 6);
+
+function renderLabels(meta) {
+  const list = aEnvoyer(meta);
+  $('labelsList').innerHTML = list.length ? '' : '<p>Aucun colis à envoyer.</p>';
+  for (const s of list) {
+    const m = meta[s.id] || {};
+    const d = document.createElement('div');
+    d.className = 'card ' + (s.labelId ? 'st-rouge' : 'st-gris');
+    d.innerHTML = `${s.image ? `<img src="${esc(s.image)}" referrerpolicy="no-referrer">` : ''}<div>
+      <div class="num">#${m.num ?? '?'}</div><b>${esc(s.title)}</b><div>${esc(s.buyer)}</div>
+      ${s.labelId ? '<button>📄 Bordereau tamponné</button>' : '<div class="small">Pas encore de bordereau reçu par mail.</div>'}</div>`;
+    const b = d.querySelector('button');
+    if (b) b.onclick = () => withBusy(b, async () => {
+      const pdf = await stampedFromMail(s, m.num);
+      download(pdf, `#${m.num}-${s.buyer}.pdf`);
+    });
+    $('labelsList').appendChild(d);
+  }
+}
+
+$('btnAllLabels').onclick = e => withBusy(e.target, async () => {
+  const meta = (await kv('meta')) || {};
+  const list = aEnvoyer(meta).filter(s => s.labelId);
+  if (!list.length) return alert('Aucun bordereau reçu.');
+  const out = await PDFLib.PDFDocument.create();
+  for (const s of list) {
+    const one = await PDFLib.PDFDocument.load(await stampedFromMail(s, meta[s.id].num));
+    (await out.copyPages(one, one.getPageIndices())).forEach(p => out.addPage(p));
+  }
+  download(await out.save(), `bordereaux-${new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')}.pdf`);
+});
+
+async function stampedFromMail(s, num) {
+  const lab = await api({ action: 'label', id: s.labelId });
+  const bytes = Uint8Array.from(atob(lab.b64), c => c.charCodeAt(0));
+  return stamp(bytes, { num, title: s.title, buyer: s.buyer, photo: await photoBytes(s) });
+}
+
+async function photoBytes(s) {
+  if (!s.image) return null;
+  try {
+    const r = await api({ action: 'img', url: s.image });
+    return { bytes: Uint8Array.from(atob(r.b64), c => c.charCodeAt(0)), png: /png/.test(r.type) };
+  } catch { return null; }
+}
+
+// PDF ajouté à la main : on choisit la vente
+let manualPdf = null;
+dropZone($('dropPdf'), 'application/pdf', async files => {
+  const f = files.find(x => x.type === 'application/pdf' || /\.pdf$/i.test(x.name));
+  if (!f) return alert('Ce n\'est pas un PDF.');
+  manualPdf = await f.arrayBuffer();
+  const meta = (await kv('meta')) || {};
+  const list = aEnvoyer(meta);
+  $('pickBox').innerHTML = `<p><b>${esc(f.name)}</b> — touche la bonne vente :</p>` + (list.length ? '' : '<p>Aucune vente à envoyer.</p>');
+  for (const s of list) {
+    const m = meta[s.id] || {};
+    const d = document.createElement('div');
+    d.className = 'card'; d.style.cursor = 'pointer';
+    d.innerHTML = `${s.image ? `<img src="${esc(s.image)}" referrerpolicy="no-referrer">` : ''}<div><div class="num">#${m.num}</div><b>${esc(s.title)}</b><div>${esc(s.buyer)}</div></div>`;
+    d.onclick = async () => {
+      d.style.opacity = .5;
+      try {
+        const pdf = await stamp(manualPdf, { num: m.num, title: s.title, buyer: s.buyer, photo: await photoBytes(s) });
+        download(pdf, `#${m.num}-${s.buyer}.pdf`);
+        $('pickBox').innerHTML = '';
+      } catch (e) { alert('Erreur PDF : ' + e.message); d.style.opacity = 1; }
+    };
+    $('pickBox').appendChild(d);
+  }
+});
+
+async function stamp(bytes, c) {
   const { PDFDocument, StandardFonts, rgb } = PDFLib;
   const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
   const font = await doc.embedFont(StandardFonts.HelveticaBold);
-  const img = c.photo ? await doc.embedJpg(c.photo) : null;
-
-  const W = 200, H = 120, M = 15;
+  let img = null;
+  if (c.photo) { try { img = c.photo.png ? await doc.embedPng(c.photo.bytes) : await doc.embedJpg(c.photo.bytes); } catch {} }
+  const pos = cfg('pos');
+  const W = 220, H = 120, M = 12;
   let page, x, y;
   if (pos === 'page') {
-    const size = doc.getPage(0).getSize();
-    page = doc.addPage([size.width, size.height]);
-    x = (size.width - W) / 2; y = size.height - H - 60;
+    const sz = doc.getPage(0).getSize();
+    page = doc.addPage([sz.width, sz.height]); x = (sz.width - W) / 2; y = sz.height - H - 60;
   } else {
     page = doc.getPage(0);
     const { width, height } = page.getSize();
@@ -168,57 +512,58 @@ async function stamp(bytes, c, pos) {
   }
   page.drawRectangle({ x, y, width: W, height: H, color: rgb(1, 1, 1), borderColor: rgb(0, 0, 0), borderWidth: 2 });
   if (img) {
-    const s = Math.min(100 / img.width, 100 / img.height);
-    page.drawImage(img, { x: x + 10, y: y + 10 + (100 - img.height * s) / 2, width: img.width * s, height: img.height * s });
+    const k = Math.min(80 / img.width, 100 / img.height);
+    page.drawImage(img, { x: x + 8 + (80 - img.width * k) / 2, y: y + 10 + (100 - img.height * k) / 2, width: img.width * k, height: img.height * k });
   }
-  const tx0 = x + 118;
-  page.drawText('#' + c.num, { x: tx0, y: y + H - 40, size: 30, font });
-  page.drawText(cut(clean(c.nom), 14), { x: tx0, y: y + 45, size: 9, font });
-  page.drawText(cut(clean(c.pseudo), 14), { x: tx0, y: y + 25, size: 9, font });
+  const tx = x + 96;
+  page.drawText('#' + c.num, { x: tx, y: y + H - 38, size: 30, font });
+  wrap(clean(c.title), 20, 3).forEach((l, i) => page.drawText(l, { x: tx, y: y + 58 - i * 11, size: 9, font }));
+  page.drawText(clean(c.buyer).slice(0, 20), { x: tx, y: y + 12, size: 10, font });
   return doc.save();
 }
-// La police PDF de base ne gère pas les emojis : on les retire.
-const clean = s => String(s).replace(/[^\x20-\x7E -ÿ]/g, '');
-const cut = (s, n) => s.length > n ? s.slice(0, n - 1) + '.' : s;
+// La police de base du PDF ne gère pas les emojis ni certains signes
+const clean = s => String(s).replace(/[–—]/g, '-').replace(/[^\x20-\x7E -ÿ]/g, '');
+function wrap(s, n, max) {
+  const out = []; let line = '';
+  for (const w of s.split(' ')) {
+    if ((line + ' ' + w).trim().length > n) { if (line) out.push(line); line = w.slice(0, n); } else line = (line + ' ' + w).trim();
+  }
+  if (line) out.push(line);
+  if (out.length > max) { out.length = max; out[max - 1] = out[max - 1].slice(0, n - 1) + '.'; }
+  return out;
+}
 
 function download(bytes, name) {
   const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  const a = document.createElement('a');
-  a.href = url; a.download = name; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+async function withBusy(btn, fn) {
+  const t = btn.textContent; btn.disabled = true; btn.textContent = '⏳…';
+  try { await fn(); } catch (e) { alert(e.message); }
+  btn.disabled = false; btn.textContent = t;
 }
 
-// ---- Formulaire ----
-const form = document.getElementById('form');
-document.getElementById('btnNew').onclick = () => form.classList.remove('hidden');
-document.getElementById('btnCancel').onclick = () => { form.reset(); form.classList.add('hidden'); };
-form.onsubmit = async e => {
-  e.preventDefault();
-  const f = document.getElementById('fPhoto').files[0];
-  const cmds = await all();
-  await save({
-    id: Date.now().toString(36),
-    num: cmds.reduce((m, c) => Math.max(m, c.num), 0) + 1,
-    nom: document.getElementById('fNom').value.trim(),
-    pseudo: document.getElementById('fPseudo').value.trim(),
-    photo: f ? await shrink(f) : null,
-    statut: 0,
-    date: new Date().toISOString(),
-  });
-  form.reset(); form.classList.add('hidden');
-  render();
-};
-
-// ---- Onglets + réglage ----
-document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
-  document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('on'));
-  b.classList.add('on'); filtre = b.dataset.f; render();
+// ================= RÉGLAGES =================
+async function showMoi() {
+  const moi = (await kv('moi')) || [];
+  $('moiThumbs').innerHTML = moi.map(p => `<img src="${p}">`).join('');
+  $('moiCount').textContent = moi.length;
+}
+dropZone($('dropMoi'), 'image/*', async files => {
+  const moi = (await kv('moi')) || [];
+  for (const f of files) if (f.type.startsWith('image/')) moi.push(await shrink(f));
+  await kv('moi', moi); showMoi();
 });
-const pos = document.getElementById('pos');
-try { pos.value = localStorage.getItem('pos') || 'br'; } catch {}
-pos.onchange = () => { try { localStorage.setItem('pos', pos.value); } catch {} };
+$('btnMoiClear').onclick = async () => { if (confirm('Effacer tes photos ?')) { await kv('moi', []); showMoi(); } };
 
-render();
+const FIELDS = ['kGemini', 'mGemini', 'kGroq', 'mGroq', 'kScript', 'pDesc'];
+FIELDS.forEach(k => $(k).value = cfg(k));
+$('btnSave').onclick = () => { FIELDS.forEach(k => setCfg(k, $(k).value.trim())); alert('Enregistré'); };
+$('pos').value = cfg('pos');
+$('pos').onchange = () => setCfg('pos', $('pos').value);
+
+showMoi();
 </script>
 </body>
 </html>
